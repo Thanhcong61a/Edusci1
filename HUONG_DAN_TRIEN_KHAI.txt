@@ -1,0 +1,29 @@
+HƯỚNG DẪN ĐƯA EDUSCI AI LÊN WEBSITE (không cần chạy lệnh trên máy tính)
+
+1. Giải nén ZIP này. KHÔNG viết API key vào tệp HTML, .env.example hoặc GitHub.
+2. Trên https://github.com tạo repository mới tên edusci-ai, chọn PRIVATE nếu có thể.
+3. Vào repository > Add file > Upload files, tải lên 6 tệp và thư mục public (chính các tệp ở bên trong ZIP, không cần tải ZIP lên). Commit changes.
+4. Trên https://dashboard.render.com chọn New > Web Service > Connect GitHub > chọn repo edusci-ai.
+5. Điền cấu hình:
+    Name: edusci-ai
+    Language/Runtime: Node
+    Build Command: npm install
+    Start Command: npm start
+    (Root Directory: để trống nếu package.json nằm ở gốc repo)
+6. Trong Environment (hoặc phần Advanced > Add Environment Variable khi tạo):
+    KEY = OPENAI_API_KEY
+    VALUE = [dán API key mà bạn vừa tạo, chỉ vào Render]
+    KEY = OPENAI_MODEL
+    VALUE = gpt-6-luna
+   Không thêm dấu ngoặc kép vào giá trị. Nhấn Save, Deploy.
+7. Khi Render báo Live, mở địa chỉ HTTPS được cấp (ví dụ https://edusci-ai.onrender.com).
+8. Mở thêm đường dẫn /health để kiểm tra cấu hình. {"ok":true,"configured":true} là cấu hình khóa đã có, chưa xác nhận AI trả lời.
+9. Thử hỏi: “Tại sao lá cây có màu xanh?” Nếu AI đáp, ứng dụng đã kết nối được.
+10. Trên website (ví dụ Google Sites): Chèn > Nhúng > Theo URL rồi dán URL HTTPS của ứng dụng; hoặc Chèn > Nhúng > Mã nhúng rồi sử dụng:
+<iframe src="https://TEN-APP-CUA-BAN.onrender.com/" title="EduSci AI" width="100%" height="650" style="border:0;border-radius:16px"></iframe>
+
+BẢO MẬT
+- Tuyệt đối không đăng API key vào GitHub, HTML, ảnh chụp màn hình hoặc gửi cho người khác.
+- Mở phần Billing của OpenAI API để bảo đảm tài khoản đủ hạn mức và theo dõi chi phí.
+- Trước khi mở chatbot cho học sinh sử dụng công khai: bổ sung kiểm soát truy cập, giới hạn sử dụng, chính sách quyền riêng tư và kiểm thử khoa học.
+- Nếu Render thông báo Build Failed, xem Logs; nếu báo AI chưa kết nối, kiểm tra Environment, Billing và tên model.

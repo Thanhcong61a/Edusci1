@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduSci AI – Gia sư Khoa học Tự nhiên</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; color: #0e3058; background: #f1faff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .app { max-width: 780px; min-height: 570px; height: min(760px, 100dvh); margin: auto; display: flex; flex-direction: column; background: white; border: 1px solid #cce9f7; border-radius: 18px; overflow: hidden; box-shadow: 0 16px 40px #0d669a14; }
+    .head { background: linear-gradient(115deg,#116cdb,#08b4ca); color: white; padding: 16px 19px; display:flex; align-items:center; gap: 12px; }
+    .logo { width: 48px; height: 48px; border-radius: 15px; background: #ffffff28; display:grid; place-items:center; font-size: 27px; }
+    .head h1 { font-size: 20px; margin: 0 0 4px; }
+    .head p { margin: 0; font-size: 13px; opacity: .95; }
+    .filters { display:flex; gap: 10px; padding: 12px 16px; background: #eef9ff; border-bottom: 1px solid #d4eaf7; flex-wrap:wrap; }
+    .filters label { display:flex; align-items:center; gap: 7px; font-size: 13px; font-weight: 650; color: #285c84; }
+    .filters select { padding: 8px; border-radius: 10px; border: 1px solid #b4dff0; color: #124a80; background:white; font: inherit; }
+    .chat { padding: 20px; flex: 1; overflow-y: auto; display:flex; flex-direction:column; gap: 14px; background: linear-gradient(#f8fdff,#fff); }
+    .msg { max-width: 88%; padding: 13px 15px; border-radius: 16px; font-size: 15px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .msg.assistant { align-self: flex-start; background: #eaf6ff; border-bottom-left-radius: 5px; }
+    .msg.user { align-self: flex-end; background: #116cdb; color: white; border-bottom-right-radius: 5px; }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 12px; }
+    .suggestions button { font-size: 13px; padding: 9px 12px; color: #1164b4; background: #eff9ff; border: 1px solid #cbe8f9; border-radius: 20px; cursor:pointer; }
+    form { display:flex; align-items:flex-end; gap: 10px; padding: 13px; border-top: 1px solid #e5f0f7; }
+    textarea { flex: 1; min-height: 44px; max-height: 120px; resize: vertical; border: 1px solid #c9e1ef; border-radius: 12px; padding: 12px; font: inherit; font-size: 15px; color: #17375d; outline-color: #118edb; }
+    button.send { background:#0672dc; color:white; padding: 12px 16px; font: inherit; font-weight:650; border:none; border-radius:12px; cursor:pointer; min-height:45px; }
+    button:disabled { opacity: .5; cursor: wait; }
+    .note { color: #557992; padding: 0 14px 12px; font-size: 11px; text-align: center; }
+    @media(max-width:600px) { .app { border-radius: 0; min-height: 480px; height: 100dvh; border: 0; } .chat { padding: 13px; } .msg { max-width: 94%; } .head { padding: 13px; } }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Trợ lý EduSci AI">
+    <header class="head">
+      <div class="logo" aria-hidden="true">🤖</div>
+      <div><h1>EduSci AI</h1><p>Hỏi đáp Khoa học Tự nhiên • Lớp 6–9</p></div>
+    </header>
+    <div class="filters" aria-label="Chọn lớp và môn học">
+      <label for="grade">🎓 Lớp
+        <select id="grade"><option>Chưa chọn</option><option>6</option><option>7</option><option>8</option><option>9</option><option>THPT</option></select>
+      </label>
+      <label for="subject">🔬 Lĩnh vực
+        <select id="subject"><option>Tổng hợp</option><option>Vật lí</option><option>Hóa học</option><option>Sinh học</option></select>
+      </label>
+    </div>
+    <section class="chat" id="chat" role="log" aria-live="polite" aria-label="Nội dung trò chuyện">
+      <div class="msg assistant">Xin chào! 👋 Mình là EduSci AI. Bạn muốn tìm hiểu kiến thức nào hôm nay? Mình có thể giải thích bài học, hướng dẫn giải bài tập và gợi ý cách làm thí nghiệm an toàn.</div>
+    </section>
+    <div class="suggestions" id="suggestions">
+      <button type="button">Vì sao có cầu vồng?</button>
+      <button type="button">Giúp mình cân bằng PTHH</button>
+      <button type="button">Quang hợp là gì?</button>
+    </div>
+    <form id="form">
+      <textarea id="question" name="question" rows="1" maxlength="1500" aria-label="Nhập câu hỏi khoa học" placeholder="Hỏi EduSci AI một câu về khoa học..." required></textarea>
+      <button class="send" id="send" type="submit">Gửi</button>
+    </form>
+    <div class="note">EduSci AI có thể mắc lỗi. Hãy đối chiếu SGK và hỏi giáo viên khi cần. Không chia sẻ thông tin cá nhân.</div>
+  </main>
+  <script>
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('form');
+    const question = document.getElementById('question');
+    const send = document.getElementById('send');
+    const grade = document.getElementById('grade');
+    const subject = document.getElementById('subject');
+    const history = [];
+    let busy = false;
+
+    function addMessage(role, content) {
+      const bubble = document.createElement('div');
+      bubble.className = 'msg ' + role;
+      bubble.textContent = content;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight;
+      return bubble;
+    }
+
+    document.querySelectorAll('#suggestions button').forEach(btn => {
+      btn.addEventListener('click', () => { question.value = btn.textContent; question.focus(); });
+    });
+
+    question.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const message = question.value.trim();
+      if (!message || busy) return;
+      busy = true;
+      send.disabled = true;
+      question.disabled = true;
+      addMessage('user', message);
+      question.value = '';
+      const placeholder = addMessage('assistant', 'EduSci đang suy nghĩ...');
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, grade: grade.value, subject: subject.value, history: history.slice(-10) }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Không kết nối được với trợ lý.');
+        placeholder.textContent = data.answer;
+        history.push({ role: 'user', content: message }, { role: 'assistant', content: data.answer });
+        if (history.length > 10) history.splice(0, history.length - 10);
+      } catch(err) {
+        placeholder.textContent = err.message || 'Lỗi kết nối, vui lòng thử lại.';
+      } finally {
+        busy = false;
+        send.disabled = false;
+        question.disabled = false;
+        question.focus();
+        chat.scrollTop = chat.scrollHeight;
+      }
+    });
+  </script>
+</body>
+</html>
